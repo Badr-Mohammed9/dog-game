@@ -51,3 +51,19 @@ k.loadSprite("dirt", "./sprites/dirt.png", {
     sliceX: 1,
     sliceY: 1,
   });
+
+  k.loadSprite('green-dino','./sprites/green-dino.png',{
+    sliceX:24,
+    sliceY:1,
+    anims: {
+      idle:{from:0,to:10,loop:true}
+    }
+  })
+
+  k.loadSprite('green-dino-back','./sprites/green-dino-back.png',{
+    sliceX:24,
+    sliceY:1,
+    anims: {
+      idle:{from:23,to:13,loop:true}
+    }
+  })

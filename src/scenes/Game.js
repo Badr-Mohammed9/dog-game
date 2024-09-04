@@ -1,3 +1,6 @@
+var curTween = null;
+const dinoSprite = { width: 100, height: 100,anim:'idle' }
+
 export function Game(k) {
     setGravity(2400);
   
@@ -9,7 +12,7 @@ export function Game(k) {
     const SPEED = 600;
     const JUMP = 1000;
     var playerSprite = { anim: "base", width: playerHeight, height: 100 };
-  
+    const fixedCameraPostion = camPos().x 
     const player = k.add([
       sprite("frog-idle", playerSprite),
       pos(0, 100),
@@ -18,30 +21,30 @@ export function Game(k) {
       "player",
     ]);
   
-    const block = k.add([
-      k.sprite("block", { width: 100, height: 100 }),
-      area(),
-      pos(200, 300),
-    //   body({ isStatic: true }),
-      "block",
-    ]);
+    // const dino = k.add([
+    //   k.sprite("green-dino", { width: 100, height: 100,anim:'idle' }),
+    //   area({scale:0.85 , shape: new Polygon([vec2(0,0), vec2(50,0), vec2(50,50), vec2(0,50)])}),
+    //   pos(200, 300),
+    //   anchor('center'),
+    //   body(),
+    //   "block",
+    // ]);
   
   
   
-    playUpdates(k, player, jump_trails, cameraMode, playerSprite, SPEED, JUMP);
   
     const level = k.addLevel(
       [
-        // Design the level layout with symbols
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "====  ====",
-        "####  ####",
-      ],
+        "                                                                                       ",
+        "                                                                                       ",
+        "                                                                                       ",
+        "                                                       =                               ",
+        "                                                     ",
+        "     d         ======                        ===                                         ",
+        "=============================    ==========          =========             ===      ",
+        "#######  ###  ##############                         ##########                                     ",
+    ]
+    ,
       {
         // The size of each grid
         tileWidth: block_width,
@@ -62,9 +65,24 @@ export function Game(k) {
             body({ isStatic: true }),
             anchor("bot"),
           ],
+          'd':()=> [
+            k.sprite("green-dino", dinoSprite),
+            area({scale:0.85 , shape: new Polygon([vec2(0,0), vec2(50,0), vec2(50,50), vec2(0,50)])}),
+            anchor('center'),
+            body(),
+            {
+              fixed_postion: null,
+              front: true
+            },
+            'dino'
+          ]
         },
       }
     );
+
+    let dino = level.get("dino")[0]
+    dino.fixed_postion = {x:dino.pos.x,y:dino.pos.y};
+    playUpdates(k, player, jump_trails, cameraMode, playerSprite, SPEED, JUMP,fixedCameraPostion,dino,block_width);
   }
   
   function playUpdates(
@@ -74,7 +92,10 @@ export function Game(k) {
     cameraMode,
     playerSprite,
     SPEED,
-    JUMP
+    JUMP,
+    fixedCameraPostion,
+    dino,
+    block_width
   ) {
     k.onKeyDown("d", () => {
       if (player.sprite !== "frog-run") {
@@ -84,7 +105,8 @@ export function Game(k) {
     });
   
     player.onUpdate(() => {
-      if (player.pos.x >= k.camPos().x || cameraMode) {
+      dinoMovement(dino,block_width)
+      if (player.pos.x >= fixedCameraPostion ) {
         k.camPos(player.pos.x, k.camPos().y);
         cameraMode = true;
       }
@@ -109,6 +131,7 @@ export function Game(k) {
     });
   
     k.onKeyPress("w", () => {
+      dinoMovement(dino,block_width)
       if (player.isGrounded() || jump_trails < 2) {
         player.jump(JUMP);
         jump_trails++;
@@ -124,3 +147,48 @@ export function Game(k) {
     });
   }
   
+function dinoMovement(dino,block_width) {
+  let max_block = dino.fixed_postion.x + 2 * block_width;
+  let min_block = dino.fixed_postion.x - 2 * block_width;
+  if (dino) {
+    if (curTween) curTween.cancel();
+    // start the tween
+    if (dino.pos.x < max_block && dino.front) {
+      if (dino.sprite !== 'green-dino') {
+        dino.use(sprite('green-dino',dinoSprite))
+      }
+      curTween = tween(
+        // start value (accepts number, Vec2 and Color)
+        dino.pos,
+        // destination value
+        vec2(dino.pos.x+ block_width,dino.pos.y),
+        // duration (in seconds)
+        3,
+        // how value should be updated
+        (val) => dino.pos = val,
+        // interpolation function (defaults to easings.linear)
+    )
+    }else {
+      dino.front = false;
+    }
+
+    if (dino.pos.x > min_block && !dino.front) {
+      if (dino.sprite !== 'green-dino-back') {
+        dino.use(sprite('green-dino-back',dinoSprite))
+      }
+      curTween = tween(
+        // start value (accepts number, Vec2 and Color)
+        dino.pos,
+        // destination value
+        vec2(dino.pos.x - block_width,dino.pos.y),
+        // duration (in seconds)
+        3,
+        // how value should be updated
+        (val) => dino.pos = val,
+        // interpolation function (defaults to easings.linear)
+    )
+    }else {
+      dino.front = true;
+    }
+  }
+}
