@@ -24,7 +24,7 @@ export function createPlayer(k, playerSprite, playerHeight) {
   }
   
   export function resetPlayerSprite(k, player, playerSprite, animation, jumpTrails) {
-    if (player.isGrounded() && player.sprite !== "frog-run" && player.sprite !== "frog-back") {
+    if (player.isGrounded()) {
       player.use(k.sprite(animation, playerSprite));
     }
     if (player.isGrounded()) {
